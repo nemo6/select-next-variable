@@ -29,6 +29,17 @@ class select_next_variable(sublime_plugin.TextCommand):
 				remove_element( list_variables, [object_position] )
 				break
 
+# { "keys": ["è"], "command": "add_backtick" },
+
+class add_backtick(sublime_plugin.TextCommand):
+	def run(self,edit):
+		view = sublime.active_window().active_view()
+		first_selection = view.sel()[0]
+		a = first_selection.begin()
+		b = first_selection.end()
+		self.view.insert( edit, a , "`" )
+		self.view.insert( edit, b+1 , "`" )
+
 """
 
 # def get_command_name(caption):
