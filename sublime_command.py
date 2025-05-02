@@ -8,68 +8,88 @@ def remove_element(target_array,list_value):
 			# break
 	return target_array
 
-def find_closest_variable(cursor_position,variables):
-	closest_variable = None
-	closest_distance = float("inf")
+def loop_select_word(view):
+	for p in view.sel():
+		word = view.word(p)
+		if word and (p.begin() == p.end()) :
+			if p.contains(word):
+				return
+			a = word.begin()
+			b = word.end()
+			view.sel().add( sublime.Region( a,b ) )
+			view.show( first_selection )
 
-	for variable in variables:
-		variable_position = variable.begin()
-		distance = abs( cursor_position - variable_position )
-		if distance < closest_distance:
-			closest_variable = variable
-			closest_distance = distance
-
-	return closest_variable
+def isAfter( a, b ):
+	return a.begin() > b.begin()
 
 # Default (Windows).sublime-keymap
 # { "keys": ["ctrl+d"], "command": "select_next_variable" },
 
 class select_next_variable(sublime_plugin.TextCommand):
 	def run(self,edit):
+		not_a_variable = False #
+		no_selection = False
+		string_scope = False
 		view = sublime.active_window().active_view()
 		list_variables = view.find_by_selector("variable")
 		str_variables = map( lambda x: view.substr(x), view.find_by_selector("variable") ) # list_variables muted by "remove_element"
 		first_selection = view.sel()[-1]
 		current_selection = { "text": view.substr(first_selection) }
 		slice_selection = remove_element( list_variables , view.sel() )
-		print( *view.sel() )
+		scope = view.scope_name( first_selection.begin() )
 
-		if( first_selection.begin() == first_selection.end() ):
-			print("No selection")
-			cursor_position = first_selection.begin()
-			closest = find_closest_variable(cursor_position,list_variables)
-			print( closest )
-			a = closest.begin()
-			b = closest.end()
-			view.sel().add( sublime.Region( a,b ) )
-			view.show( first_selection )
-			return
+		loop_select_word(view)
+
+		# h = list(map( lambda x : { "text": view.substr(x), "position":x } , slice_selection ))
+		# h = list(filter( lambda x: x["text"] == current_selection["text"], h ))
+		# if( len(h) != 0 ):
+		# 	h.pop(0)
+		# print( current_selection["text"], first_selection )
+		# print(*h,sep="\n")
+
+		# if( len( view.sel() ) > 1 ):
+		# 	print("multi-selection")
+		# 	if "string" in view.scope_name( view.sel()[0].begin() ):
+		# 		print("in a string scope")
+		# 	else:
+		# 		print("not in a string scope")
+
+		if( ( first_selection.begin() == first_selection.end() ) and len(view.sel()) == 1 ):
+			no_selection = True
 
 		if not current_selection["text"] in str_variables :
-			print( "Not a variable", current_selection["text"] )
+			not_a_variable = True
+
+		if "string" in scope:
+			not_a_variable = True
+
+		if not_a_variable :
+			# print( "Not a variable" )
 			next_position = view.find( current_selection["text"], first_selection.end() )
 			if next_position.begin() == -1:
 				return
-			print( next_position )
+			# if next_position in list_variables:
+			# 	return
 			a = next_position.begin()
 			b = next_position.end()
 			view.sel().add( sublime.Region( a,b ) )
 			view.show( first_selection )
 			return
 
+		# print( "Is a variable", current_selection["text"], first_selection )
 		# print( *str_variables )
+		# print( *slice_selection )
+		# print( *list(filter( lambda x: x == current_selection["text"], str_variables )) )
+
 		for object_position in slice_selection:
 			text = view.substr(object_position)
-			if ( current_selection["text"] == text ):
+			if ( current_selection["text"] == text and isAfter( object_position , first_selection ) ):
 				a = object_position.begin()
 				b = object_position.end()
 				view.sel().add( sublime.Region( a,b ) )
 				view.show( object_position )
-				# print( text, object_position )
-				remove_element( list_variables, [object_position] )
 				break
 
-# Default (Windows).sublime-keymap
 # { "keys": ["è"], "command": "add_backtick" },
 
 class add_backtick(sublime_plugin.TextCommand):
