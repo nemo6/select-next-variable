@@ -8,6 +8,19 @@ def remove_element(target_array,list_value):
 			# break
 	return target_array
 
+def find_closest_variable(cursor_position,variables):
+	closest_variable = None
+	closest_distance = float("inf")
+
+	for variable in variables:
+		variable_position = variable.begin()
+		distance = abs( cursor_position - variable_position )
+		if distance < closest_distance:
+			closest_variable = variable
+			closest_distance = distance
+
+	return closest_variable
+
 # Default (Windows).sublime-keymap
 # { "keys": ["ctrl+d"], "command": "select_next_variable" },
 
@@ -15,20 +28,48 @@ class select_next_variable(sublime_plugin.TextCommand):
 	def run(self,edit):
 		view = sublime.active_window().active_view()
 		list_variables = view.find_by_selector("variable")
-		first_selection = view.substr(view.sel()[0])
-		current_selection = { "text": first_selection }
-		slice_variables = remove_element( list_variables , view.sel() )
-		for object_position in slice_variables:
+		str_variables = map( lambda x: view.substr(x), view.find_by_selector("variable") ) # list_variables muted by "remove_element"
+		first_selection = view.sel()[-1]
+		current_selection = { "text": view.substr(first_selection) }
+		slice_selection = remove_element( list_variables , view.sel() )
+		print( *view.sel() )
+
+		if( first_selection.begin() == first_selection.end() ):
+			print("No selection")
+			cursor_position = first_selection.begin()
+			closest = find_closest_variable(cursor_position,list_variables)
+			print( closest )
+			a = closest.begin()
+			b = closest.end()
+			view.sel().add( sublime.Region( a,b ) )
+			view.show( first_selection )
+			return
+
+		if not current_selection["text"] in str_variables :
+			print( "Not a variable", current_selection["text"] )
+			next_position = view.find( current_selection["text"], first_selection.end() )
+			if next_position.begin() == -1:
+				return
+			print( next_position )
+			a = next_position.begin()
+			b = next_position.end()
+			view.sel().add( sublime.Region( a,b ) )
+			view.show( first_selection )
+			return
+
+		# print( *str_variables )
+		for object_position in slice_selection:
 			text = view.substr(object_position)
 			if ( current_selection["text"] == text ):
 				a = object_position.begin()
 				b = object_position.end()
 				view.sel().add( sublime.Region( a,b ) )
 				view.show( object_position )
-				print( text, object_position )
+				# print( text, object_position )
 				remove_element( list_variables, [object_position] )
 				break
 
+# Default (Windows).sublime-keymap
 # { "keys": ["è"], "command": "add_backtick" },
 
 class add_backtick(sublime_plugin.TextCommand):
