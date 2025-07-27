@@ -220,24 +220,27 @@ def find_scope( n,self,edit ):
     key2  = None
     last_char = ""
 
-    list_substr = view.substr(line_region)
-    if( len(list_substr) > 0 ):
-        last_char = list_substr[-1]
-
-    if last_char in open_scope:
-        key1 = "start"
-        key2 = "end"
-
-    if last_char in close_scope:
-        key1 = "end"
-        key2 = "start"
-
     if( current_line["level"] == 0 ):
-        obj[key1] = current_line
 
+        capture_line = view.substr(line_region)
+        # remove block comment
+        capture_line = re.sub( r"\/\*.*?\*\/", "" , capture_line )
+
+        if( len(capture_line) > 0 ):
+            last_char = capture_line[-1]
+
+        if last_char in open_scope:
+            key1 = "start"
+            key2 = "end"
+
+        if last_char in close_scope:
+            key1 = "end"
+            key2 = "start"
+
+        obj[key1] = current_line
+        
     if( key1 == "start" ):
         obj[key2] = find_down(n+1)
-
     elif( key1 == "end" ):
         obj[key2] = find_up(n)
     else:
@@ -245,17 +248,40 @@ def find_scope( n,self,edit ):
 
     list_substr2_start = view.substr(obj["start"]["region"])
     list_substr2_end = view.substr(obj["end"]["region"])
+
+    # remove block comment
+    list_substr2_start = re.sub( r"\/\*.*?\*\/", "" , list_substr2_start )
+    list_substr2_end = re.sub( r"\/\*.*?\*\/", "" , list_substr2_end )
+
     if( len(list_substr2_start) > 0 ):
-        char = list_substr2_start[-1]
+        char = get_last_char(list_substr2_start)
         if char not in open_scope:
             return None
     if( len(list_substr2_end) > 0 ):
-        char = list_substr2_end[-1]
+        char = get_last_char(list_substr2_end)
         if char not in close_scope:
             return None
-    # self.view.insert( edit, obj["end"]["region"].end(), "/*()*/" )
- 
+
+    point_end = obj["end"]["region"].end()
+    char_toggle = view.substr(obj["end"]["region"])[-4:]
+
+    if( char_toggle == "})()" ):
+        erase_region = sublime.Region( point_end-2 , point_end )
+        view.erase( edit, erase_region )
+        self.view.insert( edit, obj["end"]["region"].end() - 2 , "/*()*/" )
+
+    if( char_toggle == "()*/" ):
+        erase_region = sublime.Region( point_end-6 , point_end )
+        view.erase( edit, erase_region )
+        self.view.insert( edit, obj["end"]["region"].end() - 6 , "()" )
+
     return obj
+
+def get_last_char(char):
+    if( len(char) > 0 ):
+        return char[-1]
+    else:
+        return ""
 
 def find_up(n):
     m = list( range( 0, n ) )
@@ -264,7 +290,7 @@ def find_up(n):
         obj = get_line_content(x)
         if( obj["level"] == 0 and obj["not_empty"] ):
             return obj
-    return None
+    return "find_up X"
 
 def find_down(n):
     global max_lines
@@ -272,7 +298,7 @@ def find_down(n):
         obj = get_line_content(x)
         if( obj["level"] == 0 and obj["not_empty"] ):
             return obj
-    return None
+    return "find_down X"
 
 def reverse_get_line(region):
     global view
@@ -305,7 +331,7 @@ class toggle_scope(sublime_plugin.TextCommand):
         # current_line_text = view.substr(line_region)
         max_lines = view.rowcol(view.size())[0]+1
         # w = map( lambda x: x["number"], find_scope( n, self, edit ).values() )
-        # print( *w , sep="\n" )
+        # print( *w )
         print( find_scope( n, self, edit ) )
 
 # self.view.insert( edit, a, "/* ... */" )
