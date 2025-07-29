@@ -33,14 +33,73 @@ def isAfter( a, b ):
 # Default (Windows).sublime-keymap
 # { "keys": ["ctrl+d"], "command": "select_next_variable" },
 
-class select_next_variable(sublime_plugin.TextCommand):
+def in_range( value, region ):
+    a = region.begin()
+    b = region.end()
+    if( value >= a and value <= b ):
+        return True
+    else:
+        return False
+
+def in_region( var , region ):
+    if( ( in_range(var.begin(),region) ) and ( in_range(var.end(),region) ) ):
+        return True
+    else:
+        return False
+
+def filter_by_region( m, region ):
+    # w = []
+    # for x in m:
+    #   if( in_region(x,region) ):
+    #       w.append( x )
+    # return w
+    return list( filter( lambda x: in_region(x,region) , m ) )
+
+def find_variable(view):
+    selectors = [
+        "support.module.node.js",
+        "source.js.embedded.expression",
+        "support.type.object.node.js",
+        "variable",
+        # "variable.other.constant.js",
+        "entity.name.function.js",
+        # 'storage.type.js',
+    ]
+    acc=[]
+    for selector in selectors:
+        acc.extend( view.find_by_selector(selector) )
+
+    # acc.sort( key=lambda x: x.begin() )
+
+    return acc
+
+class update_variable_selection(sublime_plugin.TextCommand):
     def run(self,edit):
+        view = self.view
+        region = view.sel()[0]
+        # print( region.begin() )
+        # print( region.end() )
+        # print( m[0:5] )
+        m = find_variable(view)
+        result = filter_by_region(m,region)
+        for x in result:
+          print( view.substr(x) )
+        # print("hello")
+
+class select_next_variable(sublime_plugin.TextCommand):
+
+    def run(self,edit):
+        print("...")
         not_a_variable = False
         no_selection = False
         string_scope = False
-        view = sublime.active_window().active_view()
-        list_variables = view.find_by_selector("variable")
-        str_variables = map( lambda x: view.substr(x), view.find_by_selector("variable") ) # list_variables muted by "remove_element"
+        # view = sublime.active_window().active_view()
+        view = self.view
+
+        # list_variables = view.find_by_selector("variable")
+        list_variables = find_variable(view)
+        str_variables = list( map( lambda x: view.substr(x), list_variables ) ) # list_variables muted by "remove_element"
+
         first_selection = view.sel()[-1]
         current_selection = { "text": view.substr(first_selection) }
         slice_selection = remove_element( list_variables , view.sel() )
@@ -58,20 +117,24 @@ class select_next_variable(sublime_plugin.TextCommand):
         if( len( view.sel() ) > 1 ):
             # print("multi-selection")
             if "string" in view.scope_name( view.sel()[0].begin() ):
-                # print("in a string scope")
+                print("in a string scope")
                 not_a_variable = True
 
         if( ( first_selection.begin() == first_selection.end() ) and len(view.sel()) == 1 ):
+            print( 1 )
             no_selection = True
 
         if not current_selection["text"] in str_variables :
+            print( 2 )
+            print( str_variables[0] )
             not_a_variable = True
 
         if "string" in scope:
+            print( 3 )
             not_a_variable = True
 
         if not_a_variable :
-            # print( "Not a variable" )
+            print( "not a variable" )
             next_position = view.find( current_selection["text"], first_selection.end() )
             if next_position.begin() == -1:
                 return
@@ -146,12 +209,21 @@ class add_scope_function(sublime_plugin.TextCommand):
 
 class add_arrow(sublime_plugin.TextCommand):
     def run(self,edit):
-        if( len(self.view.sel()) == 2 ):
-            a,b = self.view.sel()
-            start_pos = a.begin()
-            end_pos   = b.begin()
-            self.view.insert( edit, end_pos, " <=" )
-            self.view.insert( edit, start_pos, " =>" )
+        print( len( self.view.sel() ) )
+        if( len( self.view.sel() ) == 1 ):
+            selection = self.view.sel()[0]
+            start = selection.begin()
+            end = selection.end()
+            self.view.insert( edit, end, "// <=" )
+            self.view.insert( edit, start, "// =>" )
+        elif( len(self.view.sel()) > 1 ):
+            # a,b = self.view.sel()
+            a = self.view.sel()[0]
+            b = self.view.sel()[-1]
+            start = a.begin()
+            end   = b.begin()
+            self.view.insert( edit, end, "// <=" )
+            self.view.insert( edit, start, "// =>" )
 
 def line_start(point):
     global view
@@ -334,6 +406,12 @@ class toggle_scope(sublime_plugin.TextCommand):
         # print( *w )
         print( find_scope( n, self, edit ) )
 
+class find_type_token(sublime_plugin.TextCommand):
+    def run(self,edit):
+        for region in self.view.sel():
+            cope_name = self.view.scope_name(region.begin()) # Get the definition/type of the token under cursor
+            print( cope_name )
+
 # self.view.insert( edit, a, "/* ... */" )
 # self.view.insert( edit, b, "/* ... */" )
 
@@ -372,3 +450,5 @@ class add_backtick(sublime_plugin.TextCommand):
 # class HelloWorldCommand(sublime_plugin.TextCommand):
 #   def run(self, edit):
 #       self.view.insert(edit, self.view.sel()[0].begin(), "hello world")
+
+# word = self.view.substr(self.view.word(region.begin())) # Get the word under cursor
