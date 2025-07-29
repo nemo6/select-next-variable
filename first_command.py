@@ -30,9 +30,6 @@ def loop_select_word(view):
 def isAfter( a, b ):
     return a.begin() > b.begin()
 
-# Default (Windows).sublime-keymap
-# { "keys": ["ctrl+d"], "command": "select_next_variable" },
-
 def in_range( value, region ):
     a = region.begin()
     b = region.end()
@@ -60,31 +57,80 @@ def find_variable(view):
         "support.module.node.js",
         "source.js.embedded.expression",
         "support.type.object.node.js",
+        # "variable.other",
+        # "variable.other.object.js",
         "variable",
-        # "variable.other.constant.js",
-        "entity.name.function.js",
-        # 'storage.type.js',
+        # "entity.name.function.js",
+        # "storage.type.js",
     ]
     acc=[]
     for selector in selectors:
         acc.extend( view.find_by_selector(selector) )
 
-    # acc.sort( key=lambda x: x.begin() )
+    acc.sort( key=lambda x: x.begin() )
 
     return acc
 
-class update_variable_selection(sublime_plugin.TextCommand):
+def find_input(v,m,i=0):
+    result = []
+    for x in m:
+        if( v == x[0] ):
+            result.append(x)
+    return result
+    # return [ "...", sublime.Region(0,0) ]
+
+class update_variable_selection(sublime_plugin.WindowCommand):
+    # global list_variables
+    def run(self):
+        global str_variables
+        # view = sublime.active_window().active_view()
+        view = self.window.active_view()
+        region = view.sel()[0]
+        view.sel().clear()
+        print( region )
+        m = find_variable(view)
+        list_variables = filter_by_region(m,region)
+        str_variables = list( map( lambda x: [view.substr(x),x], list_variables ) )
+        # print( str_variables )
+
+        self.window.show_input_panel(
+            "", 
+            "",  # Default text
+            self.on_done,    # Callback when done
+            self.on_change,  # Callback while typing
+            self.on_cancel   # Callback if cancelled
+        )
+    
+    def on_done( self, value ):
+        global str_variables
+        view = self.window.active_view()
+        # view.run_command( "insert", {"characters": value} )
+        list_p = find_input( value, str_variables )
+        for x in list_p:
+            c,p = x
+            view.sel().add( p )
+    
+    def on_change(self, value):
+        # print("Current input:", value)
+        pass
+    
+    def on_cancel(self):
+        # print("Input cancelled")
+        pass
+
+class update_variable_selection2(sublime_plugin.TextCommand):
     def run(self,edit):
         view = self.view
         region = view.sel()[0]
+        # view.sel().add( sublime.Region( 0,5 ) )
         # print( region.begin() )
         # print( region.end() )
         # print( m[0:5] )
         m = find_variable(view)
         result = filter_by_region(m,region)
-        for x in result:
-          print( view.substr(x) )
-        # print("hello")
+        print( list( map( lambda x: view.substr(x), result ) ) )
+        # for x in result:
+        #   print( view.substr(x) )
 
 class select_next_variable(sublime_plugin.TextCommand):
 
