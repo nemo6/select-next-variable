@@ -105,7 +105,10 @@ class update_variable_selection(sublime_plugin.WindowCommand):
         global str_variables
         view = self.window.active_view()
         # view.run_command( "insert", {"characters": value} )
-        list_p = find_input( value, str_variables )
+        list_value = value.split(" ")
+        list_p = []
+        for x in list_value:
+            list_p.extend( find_input( x, str_variables ) )
         for x in list_p:
             c,p = x
             view.sel().add( p )
