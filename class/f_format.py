@@ -1,5 +1,6 @@
 
 class f_format(sublime_plugin.TextCommand):
+
 	def run(self,edit):
 		if( len( self.view.sel() ) == 1 ):
 			view = self.view
