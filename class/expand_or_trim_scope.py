@@ -4,6 +4,9 @@ class expand_or_trim_scope(sublime_plugin.TextCommand):
 	scope_not_open = False
 	scope_is_open = False
 
+	def is_valid( self, char ):
+		return not( re.search( r"\\n|\\t| " , char ) )
+
 	def a_region_b( self , region ):
 		result = view.substr(region).strip()
 		a = region.begin()
@@ -19,9 +22,6 @@ class expand_or_trim_scope(sublime_plugin.TextCommand):
 		if( obj["after"] ):
 			result = result + " "
 		return result
-
-	def is_valid( self, char ):
-		return not( re.search( r"\\n|\\t| " , char ) )
 
 	def run(self,edit):
 		global view
@@ -62,6 +62,11 @@ class expand_or_trim_scope(sublime_plugin.TextCommand):
 					view.replace( edit, region, self.a_region_b(region) )
 				view.sel().clear()
 				view.sel().add( selection )
+
+# ...
+
+def to_str(region):
+	return view.substr(region)
 
 def find_end_scope( line, start_scope ):
 
