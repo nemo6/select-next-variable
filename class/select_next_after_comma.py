@@ -1,14 +1,4 @@
 
-def line_start(point):
-	global view
-	line_selection = view.line(point)
-	return line_selection.begin()
-
-def line_end(point):
-	global view
-	line_selection = view.line(point)
-	return line_selection.end()+1
-
 # F2
 class select_next_after_comma(sublime_plugin.TextCommand):
 	def run(self,edit):
@@ -31,11 +21,27 @@ class select_next_after_comma(sublime_plugin.TextCommand):
 		if len(line) > 0:
 			view.sel().add( line[0] )
 
+# ...
+
+def line_start(point):
+	global view
+	line_selection = view.line(point)
+	return line_selection.begin()
+
+def line_end(point):
+	global view
+	line_selection = view.line(point)
+	return line_selection.end()+1
+
+# ...
+
 def f_ord(char):
 	if isinstance( char, str) and len(char) > 0:
 		return ord(char)
 	else:
 		return None
+
+# ...
 
 def add_empty_cursor(m):
 	w = [m[0]]
