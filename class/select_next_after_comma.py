@@ -1,6 +1,7 @@
 
 # F2
 class select_next_after_comma(sublime_plugin.TextCommand):
+
 	def run(self,edit):
 		global view
 		view = self.view
