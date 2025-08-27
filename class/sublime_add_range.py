@@ -1,3 +1,4 @@
+
 class add_range(sublime_plugin.WindowCommand):
 
 	def run(self):
