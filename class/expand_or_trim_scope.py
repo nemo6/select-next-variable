@@ -1,7 +1,8 @@
-scope_not_open = False
-scope_is_open = False
 
 class expand_or_trim_scope(sublime_plugin.TextCommand):
+
+	scope_not_open = False
+	scope_is_open = False
 
 	def a_region_b( self , region ):
 		result = view.substr(region).strip()
@@ -24,8 +25,6 @@ class expand_or_trim_scope(sublime_plugin.TextCommand):
 
 	def run(self,edit):
 		global view
-		global scope_not_open
-		global scope_is_open
 		scope_not_open = False
 		scope_is_open = False
 		if( len( self.view.sel() ) == 1 ):
