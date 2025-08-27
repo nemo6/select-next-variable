@@ -1,19 +1,48 @@
 	.../AppData/Roaming/Sublime Text/Packages/User/Default.sublime-commands
 ```
-{
-	"caption": "Mycommand : scope function",
-	"command": "add_scope_function",
-},
+[
+	{
+		"caption": "add arrow (command)",
+		"command": "add_arrow",
+	},
 
-{
-	"caption": "Mycommand : add arrow",
-	"command": "add_arrow",
-},
+	{
+		"caption": "range (command)",
+		"command": "add_range",
+	},
 
-{
-	"caption": "Mycommand : range",
-	"command": "add_range",
-}
+	{
+		"caption": "input range 0-X (command)",
+		"command": "input_list_range",
+		"args": { "value": 0 }
+	},
+
+	{
+		"caption": "input range 1-X (command)",
+		"command": "input_list_range",
+		"args": { "value": 1 }
+	},
+
+	{
+		"caption": "slash (command)",
+		"command": "reg_replace",
+		"args": { "replacements": ["format_slash"] },
+
+	},
+
+	{
+		"caption": "unslash (command)",
+		"command": "reg_replace",
+		"args": { "replacements": ["format_unslash"] },
+
+	},
+
+	{
+		"caption": "format (command)",
+		"command": "f_format",
+
+	}
+]
 ```
 	.../AppData/Roaming/Sublime Text/Packages/User/Default (Windows).sublime-keymap
 
